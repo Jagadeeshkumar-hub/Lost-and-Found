@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Lost-and-Found Record Matching System | B.Tech DBMS Minor Project</title>
+  <meta name="description" content="A complete B.Tech DBMS minor project demonstrating a campus lost and found record matching system using HTML5, CSS3, vanilla JavaScript, and MySQL 8.0.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ==========================================================
+       ACADEMIC ARCHITECTURE BANNER (STRICT DISCLAIMER)
+       ========================================================== -->
+  <aside class="academic-notice-banner" role="banner">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span class="notice-badge">DBMS Minor Project</span>
+      <span class="notice-text">
+        <strong>Campus Lost-and-Found System</strong> | Architecture: Decoupled Client-Side Simulation &amp; MySQL 8.0 Engine
+      </span>
+    </div>
+    <div class="notice-text" style="font-size: 12px;">
+      <span>⚠️ No Server-Side Backend Connector: Demonstration data resides in browser session memory. Production SQL scripts execute separately in MySQL Workbench.</span>
+    </div>
+  </aside>
+
+  <!-- ==========================================================
+       HEADER & NAVIGATION BAR
+       ========================================================== -->
+  <header class="site-header">
+    <div class="header-container">
+      <div class="brand-wrapper">
+        <div class="brand-icon" aria-hidden="true">🔍</div>
+        <div>
+          <h1 class="brand-title">Campus Lost &amp; Found</h1>
+          <p class="brand-subtitle">Record Matching &amp; Custody Management System</p>
+        </div>
+      </div>
+
+      <nav class="main-nav" aria-label="Main Navigation">
+        <button class="nav-link active" data-tab-target="dashboard">
+          <span>📊</span> Dashboard
+        </button>
+        <button class="nav-link" data-tab-target="browse">
+          <span>🔍</span> Browse Items
+        </button>
+        <button class="nav-link" data-tab-target="report-lost">
+          <span>🚨</span> Report Lost
+        </button>
+        <button class="nav-link" data-tab-target="report-found">
+          <span>📦</span> Report Found
+        </button>
+        <button class="nav-link" data-tab-target="matches">
+          <span>⚡</span> Possible Matches
+        </button>
+        <button class="nav-link" data-tab-target="manage">
+          <span>📋</span> Manage &amp; Claims
+        </button>
+        <button class="nav-link" data-tab-target="sql">
+          <span>🗄️</span> SQL &amp; Docs
+        </button>
+      </nav>
+
+      <div class="nav-actions">
+        <button class="btn btn-sm btn-secondary" id="btnResetData" title="Reset in-memory records to initial mock dataset">
+          🔄 Reset Demo Data
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==========================================================
+       MAIN CONTENT CONTAINER
+       ========================================================== -->
+  <main class="app-main">
+
+    <!-- ========================================================
+         TAB 1: HOME DASHBOARD
+         ======================================================== -->
+    <section class="tab-section active" id="tab-dashboard">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Campus Lost &amp; Found Dashboard</h2>
+          <p class="section-desc">Real-time status overview of reported campus belongings, match candidates, and claim resolutions.</p>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-sm btn-primary" onclick="switchTab('report-lost')">+ Report Lost Item</button>
+          <button class="btn btn-sm btn-success" onclick="switchTab('report-found')">+ Report Found Item</button>
+        </div>
+      </div>
+
+      <!-- Educational Architecture Explanation Widget -->
+      <div class="architecture-hero-box">
+        <div class="arch-header">
+          <span class="arch-badge">Academic Architecture Overview</span>
+          <span style="font-size: 13px; color: #94a3b8;">B.Tech Computer Science &amp; Engineering — DBMS Minor Project</span>
+        </div>
+        <p style="font-size: 14px; color: #cbd5e1; max-width: 900px; line-height: 1.6;">
+          This project demonstrates a multi-criteria record matching system. Following strict academic constraints, <strong>no backend middleware (Node.js/Express/PHP/Python) is utilized</strong>. The user interface runs purely as a client-side simulation with in-memory demonstration records, while the complete relational database, views, constraints, matching queries, and transaction controls are written in <strong>MySQL 8.0 SQL scripts</strong> located in the <code>/sql</code> directory.
+        </p>
+
+        <div class="arch-flow-diagram">
+          <div class="arch-step-box">
+            <h4>1. Frontend UI Layer</h4>
+            <p>HTML5, CSS3 &amp; Vanilla JS</p>
+            <small style="color: #64748b;">Interactive Simulation &amp; In-Memory Data</small>
+          </div>
+          <div class="arch-connector">⇄</div>
+          <div class="arch-step-box">
+            <h4>2. Decoupled Boundary</h4>
+            <p>No Server / No API Connector</p>
+            <small style="color: #64748b;">Standalone Demo Logic</small>
+          </div>
+          <div class="arch-connector">⇄</div>
+          <div class="arch-step-box">
+            <h4>3. Database Engine</h4>
+            <p>MySQL 8.0 (MySQL Workbench)</p>
+            <small style="color: #64748b;">campus_lost_found Schema &amp; Views</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metric Counter Cards -->
+      <div class="stat-cards-grid">
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-lost" aria-hidden="true">🚨</div>
+          <div>
+            <div class="stat-value" id="statTotalLost">0</div>
+            <div class="stat-label">Total Lost Items</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-found" aria-hidden="true">📦</div>
+          <div>
+            <div class="stat-value" id="statTotalFound">0</div>
+            <div class="stat-label">Total Found Items</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-unresolved" aria-hidden="true">⏳</div>
+          <div>
+            <div class="stat-value" id="statUnresolved">0</div>
+            <div class="stat-label">Unresolved Reports</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-returned" aria-hidden="true">✓</div>
+          <div>
+            <div class="stat-value" id="statReturned">0</div>
+            <div class="stat-label">Returned / Claimed</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-matches" aria-hidden="true">⚡</div>
+          <div>
+            <div class="stat-value" id="statMatchesCount">0</div>
+            <div class="stat-label">Potential Matches</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dashboard Two Column Grid -->
+      <div class="dashboard-grid-2col">
+        <!-- Category Distribution -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <h3 class="panel-title">📊 Category Distribution Breakdown</h3>
+            <span class="text-xs text-muted">Lost vs Found Breakdown</span>
+          </div>
+          <div id="dashboardCategoryBars">
+            <!-- Rendered by JavaScript -->
+          </div>
+        </div>
+
+        <!-- Recent Activity Feed -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <h3 class="panel-title">⏱️ Live Campus Activity Feed</h3>
+            <span class="text-xs text-muted">Latest Reports</span>
+          </div>
+          <div class="dashboard-recent-stream" id="dashboardRecentStream">
+            <!-- Rendered by JavaScript -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         TAB 2: BROWSE ITEMS
+         ======================================================== -->
+    <section class="tab-section" id="tab-browse">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Browse Campus Records</h2>
+          <p class="section-desc">Search, filter, and inspect reported lost and turned-in belongings across campus zones.</p>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-sm btn-outline" onclick="inspectLostItemMatches(null)">⚡ Launch Matcher</button>
+        </div>
+      </div>
+
+      <!-- Filter Controls Bar -->
+      <div class="filter-bar">
+        <div class="search-input-wrapper">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="search-input" id="browseSearchInput" placeholder="Search by item name, description keywords, location, or reporter..." aria-label="Search items">
+        </div>
+
+        <div class="filter-row">
+          <div class="filter-group">
+            <label class="filter-label" for="filterType">Record Type</label>
+            <select class="form-select" id="filterType">
+              <option value="ALL">All Records (Lost &amp; Found)</option>
+              <option value="LOST">Lost Items Only</option>
+              <option value="FOUND">Found Items Only</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label class="filter-label" for="filterCategory">Category</label>
+            <select class="form-select" id="filterCategory">
+              <option value="ALL">All Categories</option>
+              <option value="ELECTRONICS">Electronics</option>
+              <option value="CARDS_ID">ID &amp; Cards</option>
+              <option value="BAGS_WALLETS">Bags &amp; Wallets</option>
+              <option value="KEYS">Keys</option>
+              <option value="BOOKS_STATIONERY">Books &amp; Stationery</option>
+              <option value="ACCESSORIES">Accessories &amp; Apparel</option>
+              <option value="DOCUMENTS">Documents</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label class="filter-label" for="filterLocation">Location</label>
+            <select class="form-select" id="filterLocation">
+              <option value="ALL">All Campus Locations</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label class="filter-label" for="filterStatus">Status</label>
+            <select class="form-select" id="filterStatus">
+              <option value="ALL">All Statuses</option>
+              <option value="ACTIVE">Unresolved (Reported / Unclaimed)</option>
+              <option value="POSSIBLE_MATCH">Possible Match / Pending</option>
+              <option value="RESOLVED">Resolved (Returned / Claimed)</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label class="filter-label" for="browseSortBy">Sort By</label>
+            <select class="form-select" id="browseSortBy">
+              <option value="date_desc">Date: Newest First</option>
+              <option value="date_asc">Date: Oldest First</option>
+              <option value="name_asc">Item Name: A to Z</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="browse-meta-info">
+        <span id="browseResultsCount">Showing 0 records</span>
+        <span class="text-xs text-muted">💡 Click "SQL Inspect" on any card to view the MySQL SELECT query</span>
+      </div>
+
+      <!-- Items Grid -->
+      <div class="cards-grid" id="browseCardsGrid">
+        <!-- Rendered by JavaScript -->
+      </div>
+    </section>
+
+    <!-- ========================================================
+         TAB 3: REPORT LOST ITEM
+         ======================================================== -->
+    <section class="tab-section" id="tab-report-lost">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Report a Lost Item</h2>
+          <p class="section-desc">Provide item characteristics, last-seen location, and description keywords to enable candidate matching.</p>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <form id="formReportLost">
+          <div class="form-grid-2col">
+            <div class="form-group col-span-2">
+              <label class="form-label" for="lostItemName">Item Name <span class="req-star">*</span></label>
+              <input type="text" class="form-control" id="lostItemName" placeholder="e.g., Casio Scientific Calculator FX-991EX" required minlength="3">
+              <span class="form-helper">Include brand and specific model name for optimal keyword indexing.</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="lostCategory">Category <span class="req-star">*</span></label>
+              <select class="form-select" id="lostCategory" required>
+                <option value="">-- Select Category --</option>
+                <option value="ELECTRONICS">Electronics</option>
+                <option value="CARDS_ID">ID &amp; Cards</option>
+                <option value="BAGS_WALLETS">Bags &amp; Wallets</option>
+                <option value="KEYS">Keys</option>
+                <option value="BOOKS_STATIONERY">Books &amp; Stationery</option>
+                <option value="ACCESSORIES">Accessories &amp; Apparel</option>
+                <option value="DOCUMENTS">Documents</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="lostDate">Lost Date <span class="req-star">*</span></label>
+              <input type="date" class="form-control" id="lostDate" required>
+            </div>
+
+            <div class="form-group col-span-2">
+              <label class="form-label" for="lostLocation">Last-Seen Campus Location <span class="req-star">*</span></label>
+              <select class="form-select" id="lostLocation" required>
+                <option value="">-- Select Location --</option>
+              </select>
+            </div>
+
+            <div class="form-group col-span-2">
+              <label class="form-label" for="lostDescription">Distinguishing Details &amp; Keywords <span class="req-star">*</span></label>
+              <textarea class="form-textarea" id="lostDescription" rows="3" placeholder="Describe color, scratches, stickers, brand marks, accessories, or content..." required minlength="10"></textarea>
+              <span class="form-helper">Specific terms (e.g., 'blue sticker', 'dent', 'lanyard') are compared against turned-in items.</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="lostReporterName">Reporter Full Name <span class="req-star">*</span></label>
+              <input type="text" class="form-control" id="lostReporterName" placeholder="e.g., Aarav Sharma" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="lostReporterRoll">Roll / Staff ID <span class="req-star">*</span></label>
+              <input type="text" class="form-control" id="lostReporterRoll" placeholder="e.g., 2023CS101" required>
+            </div>
+
+            <div class="form-group col-span-2">
+              <label class="form-label" for="lostReporterPhone">Student Contact Phone Number <span class="req-star">*</span></label>
+              <input type="tel" class="form-control" id="lostReporterPhone" placeholder="e.g., 9876543210" required pattern="[0-9]{10}" maxlength="15">
+              <span class="form-helper">10-digit mobile phone number for custody recovery notifications.</span>
+            </div>
+          </div>
+
+          <div class="notice-box-warning">
+            <strong>ℹ️ Demonstration Architecture Notice:</strong>
+            Submitting this form adds the record to the in-memory demonstration collection and recalculates match scores. It will not write to MySQL because server-side backends are excluded from this project.
+          </div>
+
+          <div class="form-actions-bar">
+            <button type="reset" class="btn btn-secondary">Clear Fields</button>
+            <button type="submit" class="btn btn-primary">Submit Lost Report</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         TAB 4: REPORT FOUND ITEM
+         ======================================================== -->
+    <section class="tab-section" id="tab-report-found">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Report a Found Item</h2>
+          <p class="section-desc">Log an item found on campus and deposit it at a campus custody desk for safe return.</p>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <form id="formReportFound">
+          <div class="form-grid-2col">
+            <div class="form-group col-span-2">
+              <label class="form-label" for="foundItemName">Item Name <span class="req-star">*</span></label>
+              <input type="text" class="form-control" id="foundItemName" placeholder="e.g., Casio Scientific Calculator FX-991EX ClassWiz" required minlength="3">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="foundCategory">Category <span class="req-star">*</span></label>
+              <select class="form-select" id="foundCategory" required>
+                <option value="">-- Select Category --</option>
+                <option value="ELECTRONICS">Electronics</option>
+                <option value="CARDS_ID">ID &amp; Cards</option>
+                <option value="BAGS_WALLETS">Bags &amp; Wallets</option>
+                <option value="KEYS">Keys</option>
+                <option value="BOOKS_STATIONERY">Books &amp; Stationery</option>
+                <option value="ACCESSORIES">Accessories &amp; Apparel</option>
+                <option value="DOCUMENTS">Documents</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="foundDate">Found Date <span class="req-star">*</span></label>
+              <input type="date" class="form-control" id="foundDate" required>
+            </div>
+
+            <div class="form-group col-span-2">
+              <label class="form-label" for="foundLocation">Found Location <span class="req-star">*</span></label>
+              <select class="form-select" id="foundLocation" required>
+                <option value="">-- Select Location --</option>
+              </select>
+            </div>
+
+            <div class="form-group col-span-2">
+              <label class="form-label" for="foundStoragePlace">Custody / Storage Office <span class="req-star">*</span></label>
+              <input type="text" class="form-control" id="foundStoragePlace" placeholder="e.g., Central Library Circulation Counter or Campus Main Security Post" required>
+              <span class="form-helper">The official location where the physical property has been deposited.</span>
+            </div>
+
+            <div class="form-group col-span-2">
+              <label class="form-label" for="foundDescription">Description &amp; Observed Condition <span class="req-star">*</span></label>
+              <textarea class="form-textarea" id="foundDescription" rows="3" placeholder="Describe physical condition, markings, or identifiable traits..." required minlength="10"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="foundFinderName">Finder Name <span class="req-star">*</span></label>
+              <input type="text" class="form-control" id="foundFinderName" placeholder="e.g., Sunita Deshmukh" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="foundFinderRole">Finder Role</label>
+              <input type="text" class="form-control" id="foundFinderRole" placeholder="e.g., Library Staff / Student / Security">
+            </div>
+
+            <div class="form-group col-span-2">
+              <label class="form-label" for="foundFinderPhone">Finder Contact Phone Number</label>
+              <input type="tel" class="form-control" id="foundFinderPhone" placeholder="e.g., 9876543218" maxlength="15">
+              <span class="form-helper">Optional contact number for handover verification queries.</span>
+            </div>
+          </div>
+
+          <div class="notice-box-warning">
+            <strong>ℹ️ Demonstration Architecture Notice:</strong>
+            Logging a found item creates an <code>UNCLAIMED</code> item in demonstration memory. Corresponding SQL INSERT statement is available in <code>02_insert_sample_data.sql</code>.
+          </div>
+
+          <div class="form-actions-bar">
+            <button type="reset" class="btn btn-secondary">Clear Fields</button>
+            <button type="submit" class="btn btn-success">Log Found Item</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         TAB 5: POSSIBLE MATCHES ENGINE
+         ======================================================== -->
+    <section class="tab-section" id="tab-matches">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Possible Matches Recommendation Engine</h2>
+          <p class="section-desc">Automated multi-factor comparison matching reported lost belongings against turned-in items.</p>
+        </div>
+      </div>
+
+      <!-- Match Filter Toolbar -->
+      <div class="matches-controls-panel">
+        <div style="flex: 1; min-width: 260px;">
+          <label class="filter-label" for="matchLostItemSelect">Filter Matches for a Specific Lost Item:</label>
+          <select class="form-select" id="matchLostItemSelect">
+            <option value="ALL">-- Show All Possible Matches --</option>
+          </select>
+        </div>
+
+        <div style="flex: 0.8; min-width: 220px;">
+          <label class="filter-label" for="matchConfidenceFilter">Confidence Filter:</label>
+          <select class="form-select" id="matchConfidenceFilter">
+            <option value="ALL">All Valid Candidates (≥45%)</option>
+            <option value="HIGH">High Confidence Only (≥75%)</option>
+            <option value="BEST_PER_ITEM">Top 1 Best Match per Lost Item</option>
+          </select>
+        </div>
+
+        <div style="font-size: 13px; color: var(--secondary); text-align: right;">
+          <strong id="matchCandidatesCount">Computing Matches...</strong>
+        </div>
+      </div>
+
+      <!-- Educational Matching Algorithm Formula Banner -->
+      <div class="panel-card mb-3" style="background: #fdfefe; border-left: 4px solid var(--primary);">
+        <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 6px; color: #0f172a;">
+          📐 High-Precision Multi-Factor Recommendation Algorithm
+        </h4>
+        <p style="font-size: 13px; color: var(--secondary); line-height: 1.5;">
+          The recommendation engine eliminates false matches by enforcing <strong>strict multi-factor qualification</strong>:
+          <strong>(1) Category Consistency</strong> (25 pts: mandatory prerequisite),
+          <strong>(2) Keyword &amp; Title Similarity</strong> (up to 40 pts: tokenized subject and brand overlap; requires at least 1 keyword match to qualify),
+          <strong>(3) Location Proximity</strong> (20 pts: exact campus zone or adjacent building), and
+          <strong>(4) Date Order &amp; Proximity</strong> (15 pts: Found Date ≥ Lost Date within 21 days; negative time intervals are strictly disqualified).
+      </div>
+
+      <!-- Match Results Container -->
+      <div id="matchesResultsContainer">
+        <!-- Rendered by JavaScript -->
+      </div>
+    </section>
+
+    <!-- ========================================================
+         TAB 6: MANAGE REPORTS & CLAIMS
+         ======================================================== -->
+    <section class="tab-section" id="tab-manage">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Manage Reports &amp; Claim Resolutions</h2>
+          <p class="section-desc">Review verification evidence, approve or reject ownership claims, and test lifecycle state transitions.</p>
+        </div>
+      </div>
+
+      <!-- Claims Verification Queue -->
+      <div class="panel-card mb-3">
+        <div class="panel-header">
+          <h3 class="panel-title">🛡️ Ownership Claims Verification Queue</h3>
+          <span class="text-xs text-muted">Corresponds to <code>Claims</code> table in MySQL</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Claim ID</th>
+                <th>Target Found Item</th>
+                <th>Claimant</th>
+                <th>Verification Proof &amp; Evidence</th>
+                <th>Status</th>
+                <th>Filed Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="claimsTableBody">
+              <!-- Rendered by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Lifecycle Status Manager -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <h3 class="panel-title">⚙️ Record Lifecycle Status Manager (Interactive Demo)</h3>
+          <span class="text-xs text-muted">Demonstrates state changes (REPORTED → POSSIBLE_MATCH → RETURNED)</span>
+        </div>
+        <p style="font-size: 13px; color: var(--secondary); margin-bottom: 16px;">
+          Use the dropdowns below to test instant status transitions in demonstration memory. In production, these correspond to <code>UPDATE</code> statements in <code>06_claim_processing.sql</code>.
+        </p>
+
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Record</th>
+                <th>Item Name</th>
+                <th>Category</th>
+                <th>Location</th>
+                <th>Current Status</th>
+                <th>Simulate Status Update</th>
+              </tr>
+            </thead>
+            <tbody id="managementTableBody">
+              <!-- Rendered by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         TAB 7: SQL & ARCHITECTURE REFERENCE
+         ======================================================== -->
+    <section class="tab-section" id="tab-sql">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">MySQL 8.0 Database Scripts &amp; Architecture Reference</h2>
+          <p class="section-desc">Complete overview of relational schema, constraints, SQL scripts, views, and execution procedures.</p>
+        </div>
+      </div>
+
+      <!-- Relational Schema Overview Card -->
+      <div class="panel-card mb-3">
+        <div class="panel-header">
+          <h3 class="panel-title">🗂️ Relational Schema Structure (<code>campus_lost_found</code>)</h3>
+          <span class="text-xs text-muted">5 Normalized Relational Tables</span>
+        </div>
+
+        <div class="sql-script-cards">
+          <div class="sql-card">
+            <span class="sql-card-number">TABLE: Users</span>
+            <h4 class="sql-card-title">Campus Members</h4>
+            <p class="sql-card-desc">Stores students, faculty, staff, and security personnel who report or claim items.</p>
+            <div class="text-xs text-muted">
+              <strong>Keys:</strong> PK (user_id), UNIQUE (student_or_staff_id, email)<br>
+              <strong>Constraints:</strong> CHECK (user_type IN ('STUDENT', 'FACULTY', 'STAFF', 'SECURITY'))
+            </div>
+          </div>
+
+          <div class="sql-card">
+            <span class="sql-card-number">TABLE: Locations</span>
+            <h4 class="sql-card-title">Campus Zones</h4>
+            <p class="sql-card-desc">Tracks buildings, floors, and specific rooms where items are lost or discovered.</p>
+            <div class="text-xs text-muted">
+              <strong>Keys:</strong> PK (location_id), UNIQUE (location_name)<br>
+              <strong>Constraints:</strong> CHECK (zone_type IN ('ACADEMIC', 'LIBRARY', 'SPORTS', 'CANTEEN', 'HOSTEL', 'ADMIN', 'LABORATORY'))
+            </div>
+          </div>
+
+          <div class="sql-card">
+            <span class="sql-card-number">TABLE: Lost_Items</span>
+            <h4 class="sql-card-title">Reported Losses</h4>
+            <p class="sql-card-desc">Records lost item descriptions, reporter reference, last-seen location, and status.</p>
+            <div class="text-xs text-muted">
+              <strong>Keys:</strong> PK (lost_id), FK (user_id → Users), FK (location_id → Locations)<br>
+              <strong>Constraints:</strong> CHECK (category IN (...)), CHECK (status IN ('REPORTED', 'POSSIBLE_MATCH', 'RETURNED', 'CLOSED'))
+            </div>
+          </div>
+
+          <div class="sql-card">
+            <span class="sql-card-number">TABLE: Found_Items</span>
+            <h4 class="sql-card-title">Recovered Belongings</h4>
+            <p class="sql-card-desc">Tracks found items, safe custody desk, finder reference, and claim lifecycle status.</p>
+            <div class="text-xs text-muted">
+              <strong>Keys:</strong> PK (found_id), FK (finder_id → Users), FK (location_id → Locations)<br>
+              <strong>Constraints:</strong> CHECK (status IN ('UNCLAIMED', 'CLAIM_PENDING', 'CLAIMED', 'DISPOSED'))
+            </div>
+          </div>
+
+          <div class="sql-card">
+            <span class="sql-card-number">TABLE: Claims</span>
+            <h4 class="sql-card-title">Verification Claims</h4>
+            <p class="sql-card-desc">Associative entity managing ownership claims, verification evidence, and security resolution.</p>
+            <div class="text-xs text-muted">
+              <strong>Keys:</strong> PK (claim_id), FK (found_id → Found_Items), FK (claimant_id → Users), FK (lost_id → Lost_Items)<br>
+              <strong>Constraints:</strong> CHECK (claim_status IN ('PENDING', 'VERIFIED', 'APPROVED', 'REJECTED'))
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SQL Scripts Manifest -->
+      <div class="panel-card mb-3">
+        <div class="panel-header">
+          <h3 class="panel-title">📜 SQL Scripts Manifest (In <code>/sql</code> Directory)</h3>
+          <span class="text-xs text-muted">Execute in Numerical Order in MySQL Workbench</span>
+        </div>
+
+        <div class="sql-script-cards">
+          <div class="sql-card">
+            <span class="sql-card-number">01</span>
+            <h4 class="sql-card-title">01_create_database.sql</h4>
+            <p class="sql-card-desc">Creates <code>campus_lost_found</code> database, defines all 5 tables, primary/foreign keys, CHECK constraints, and performance indexes.</p>
+          </div>
+
+          <div class="sql-card">
+            <span class="sql-card-number">02</span>
+            <h4 class="sql-card-title">02_insert_sample_data.sql</h4>
+            <p class="sql-card-desc">Populates realistic demonstration data: 12 users, 10 locations, 22 lost items, 22 found items, and 6 claims.</p>
+          </div>
+
+          <div class="sql-card">
+            <span class="sql-card-number">03</span>
+            <h4 class="sql-card-title">03_basic_queries.sql</h4>
+            <p class="sql-card-desc">Demonstrates CRUD queries, WHERE, LIKE, ORDER BY, INNER/LEFT JOINs, GROUP BY, aggregates, and subqueries.</p>
+          </div>
+
+          <div class="sql-card">
+            <span class="sql-card-number">04</span>
+            <h4 class="sql-card-title">04_matching_queries.sql</h4>
+            <p class="sql-card-desc">Strict, flexible, keyword, and dynamic multi-factor matching algorithms calculating confidence scores in SQL.</p>
+          </div>
+
+          <div class="sql-card">
+            <span class="sql-card-number">05</span>
+            <h4 class="sql-card-title">05_views_and_reports.sql</h4>
+            <p class="sql-card-desc">Creates views: <code>vw_unresolved_lost_items</code>, <code>vw_unclaimed_found_items</code>, <code>vw_possible_matches</code>, and analytical summary reports.</p>
+          </div>
+
+          <div class="sql-card">
+            <span class="sql-card-number">06</span>
+            <h4 class="sql-card-title">06_claim_processing.sql</h4>
+            <p class="sql-card-desc">ACID transaction workflows for submitting claims, approving claims, rollback handling, and rejecting claims.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Execution Walkthrough Guide -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <h3 class="panel-title">💻 How to Run in MySQL Workbench 8.0</h3>
+          <span class="text-xs text-muted">Viva &amp; Lab Evaluation Instructions</span>
+        </div>
+        <ol style="padding-left: 20px; font-size: 14px; color: var(--secondary); line-height: 1.8;">
+          <li>Open <strong>MySQL Workbench</strong> and connect to your local MySQL 8.0 server instance (e.g., <code>localhost:3306</code> as <code>root</code>).</li>
+          <li>Go to <strong>File &gt; Open SQL Script...</strong> and navigate to the project's <code>sql/</code> folder.</li>
+          <li>Open and execute <code>01_create_database.sql</code> (click the lightning bolt icon ⚡) to build the database and tables.</li>
+          <li>Open and execute <code>02_insert_sample_data.sql</code> to load the sample records.</li>
+          <li>Run <code>03_basic_queries.sql</code> to test joins, filters, and aggregations.</li>
+          <li>Run <code>04_matching_queries.sql</code> to demonstrate the multi-factor candidate matching queries.</li>
+          <li>Run <code>05_views_and_reports.sql</code> to create the views (<code>vw_possible_matches</code>, etc.).</li>
+          <li>Run <code>06_claim_processing.sql</code> to demonstrate transaction commits and rollbacks.</li>
+        </ol>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==========================================================
+       MODAL DIALOG (SQL INSPECT & ALERTS)
+       ========================================================== -->
+  <div class="modal-overlay" id="sqlCodeModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">Modal Title</h3>
+        <button class="modal-close-btn" aria-label="Close dialog">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- Injected by JavaScript -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-sm btn-secondary modal-close-btn">Close Window</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+  <!-- ==========================================================
+       FOOTER
+       ========================================================== -->
+  <footer class="site-footer">
+    <p><strong>Campus Lost-and-Found Record Matching System</strong> — B.Tech DBMS Minor Project</p>
+    <p class="footer-meta">
+      Frontend: HTML5, CSS3, Vanilla JavaScript | Database Engine: MySQL 8.0 | Standalone In-Memory Simulation
+    </p>
+  </footer>
+
+  <!-- Project Scripts -->
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
